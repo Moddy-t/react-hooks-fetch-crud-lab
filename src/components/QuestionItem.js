@@ -1,25 +1,45 @@
-import React from "react";
+function QuestionItem({ question, onUpdate }) {
+  function handleCorrectAnswerChange(e) {
+    const updatedQuestion = { ...question, correctIndex: parseInt(e.target.value) };
 
-function QuestionItem({ question }) {
-  const { id, prompt, answers, correctIndex } = question;
-
-  const options = answers.map((answer, index) => (
-    <option key={index} value={index}>
-      {answer}
-    </option>
-  ));
+    fetch(`http://localhost:4000/questions/${question.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ correctIndex: updatedQuestion.correctIndex }),
+    })
+      .then(response => response.json())
+      .then(data => onUpdate(data))
+      .catch(error => console.error("Error updating question:", error));
+  }
 
   return (
-    <li>
-      <h4>Question {id}</h4>
-      <h5>Prompt: {prompt}</h5>
-      <label>
-        Correct Answer:
-        <select defaultValue={correctIndex}>{options}</select>
-      </label>
-      <button>Delete Question</button>
-    </li>
+    <div>
+      <h3>{question.prompt}</h3>
+      <select value={question.correctIndex} onChange={handleCorrectAnswerChange}>
+        {question.answers.map((answer, index) => (
+          <option key={index} value={index}>
+            {answer}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
-export default QuestionItem;
+function QuestionList({ questions, setQuestions }) {
+  function handleUpdate(updatedQuestion) {
+    setQuestions(prevQuestions =>
+      prevQuestions.map(q => (q.id === updatedQuestion.id ? updatedQuestion : q))
+    );
+  }
+
+  return (
+    <div>
+      {questions.map(question => (
+        <QuestionItem key={question.id} question={question} onUpdate={handleUpdate} />
+      ))}
+    </div>
+  );
+}
+
+export default QuestionList;
